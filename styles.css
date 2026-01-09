@@ -133,6 +133,7 @@ section h2 {
 
 .last-updated {
   margin-bottom: 16px;
+  margin-top: 16px;
   font-size: 0.85rem;
   color: var(--muted);
 }
