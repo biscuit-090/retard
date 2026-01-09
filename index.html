@@ -25,9 +25,8 @@
     </header>
 
     <main>
-      <p style="margin-bottom: 40px;"><b>Important:</b> this site only tracks recent trades while your browser has this
-        site open. There is no central server/database storing these trades. Whatever trades appear here
-        are ones found while you've had this website open.
+      <p style="margin-bottom: 40px;"><b>Important:</b> <br /><br />This website only shows bets/sells that happen while you have it open.
+There is no shared database. If you refresh or leave, entries may disappear.
       </p>
       <section>
         <h2>Live (Most Recent)</h2>
@@ -41,8 +40,31 @@
         <h2>Last 1 Hour</h2>
         <div id="historicalTrades" class="trades"></div>
       </section>
-    </main>
 
+      <h3>Legend</h3>
+      <section class="legend" aria-label="Buy and Sell legend">
+        <div class="legend-items">
+          <div class="legend-item buy">
+            <span class="badge">BUY</span>
+            <span class="legend-text">
+              Someone bought a prediction (placed a bet because they're based)
+            </span>
+          </div>
+
+          <div class="legend-item sell">
+            <span class="badge">SELL</span>
+            <span class="legend-text">
+              Someone sold a prediction (cashed out a bet bc they're a pussy)
+            </span>
+          </div>
+        </div>
+
+        <p class="legend-note">
+          BUY and SELL only show money moving — <b>not which answer they picked</b> (YES, NO, or other outcomes)
+        </p>
+      </section>
+
+    </main>
     <script src="app.js"></script>
   </div>
 </body>
