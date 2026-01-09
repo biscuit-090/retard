@@ -1,7 +1,3 @@
-const MARKET_API = "https://api.allorigins.win/raw?url=https://gamma-api.polymarket.com/markets";
-const MARKET_CACHE_KEY = "polymarket_market_cache";
-const MARKET_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-
 const API_URL = "https://data-api.polymarket.com/trades?limit=1000";
 const MIN_SIZE = 10_000;
 const REFRESH_INTERVAL = 10; // seconds
@@ -20,14 +16,14 @@ circle.style.strokeDasharray = `${circumference}`;
 let secondsLeft = REFRESH_INTERVAL;
 
 /**
- * Trade fingerprint
+ * Create a stable fingerprint for a trade
  */
 function tradeKey(t) {
   return `${t.conditionId}-${t.timestamp}-${t.size}-${t.price}-${t.side}`;
 }
 
 /**
- * Load persisted history
+ * Load persisted history from localStorage
  */
 function loadHistory() {
   try {
@@ -39,7 +35,7 @@ function loadHistory() {
 }
 
 /**
- * Save persisted history
+ * Save history to localStorage
  */
 function saveHistory(store) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
@@ -47,12 +43,11 @@ function saveHistory(store) {
 
 /**
  * In-memory + persisted store
- * key -> trade object + firstSeen
  */
 let historyStore = loadHistory();
 
 /**
- * Expire old trades
+ * Expire trades older than 1 hour
  */
 function expireHistory() {
   const now = Date.now();
@@ -69,7 +64,7 @@ function expireHistory() {
 }
 
 /**
- * Progress ring
+ * Update countdown ring
  */
 function setProgress(seconds) {
   const offset =
@@ -77,77 +72,8 @@ function setProgress(seconds) {
   circle.style.strokeDashoffset = offset;
 }
 
-let marketMap = {};
-
-function loadMarketCache() {
-  try {
-    const raw = localStorage.getItem(MARKET_CACHE_KEY);
-    if (!raw) return false;
-
-    const parsed = JSON.parse(raw);
-    if (Date.now() - parsed.timestamp > MARKET_CACHE_TTL) return false;
-
-    marketMap = parsed.data;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function saveMarketCache(data) {
-  localStorage.setItem(
-    MARKET_CACHE_KEY,
-    JSON.stringify({
-      timestamp: Date.now(),
-      data
-    })
-  );
-}
-
-async function loadMarkets() {
-  if (loadMarketCache()) return;
-
-  const res = await fetch(MARKET_API);
-  const markets = await res.json();
-
-  const map = {};
-
-  for (const m of markets) {
-    if (!m.conditionId || !Array.isArray(m.outcomes)) continue;
-
-    map[m.conditionId] = {
-      question: m.question || "Unknown question",
-      outcomes: m.outcomes
-    };
-  }
-
-  marketMap = map;
-  saveMarketCache(map);
-}
-
-function resolveOutcome(trade) {
-  const market = marketMap[trade.conditionId];
-  if (!market || !market.outcomes?.length) return "Unknown outcome";
-
-  // If API provides explicit outcome index (multi-outcome safe)
-  if (typeof trade.outcomeIndex === "number") {
-    return market.outcomes[trade.outcomeIndex] ?? "Unknown outcome";
-  }
-
-  // Binary fallback (YES/NO style markets)
-  if (market.outcomes.length === 2) {
-    return trade.side === "BUY"
-      ? market.outcomes[0]
-      : market.outcomes[1];
-  }
-
-  // Multi-outcome fallback when index is missing
-  return "Multiple outcomes";
-}
-
-
 /**
- * Fetch trades
+ * Fetch latest trades
  */
 async function fetchTrades() {
   try {
@@ -160,12 +86,12 @@ async function fetchTrades() {
     renderLive(bigTrades);
     renderHistory();
   } catch (err) {
-    console.error("Fetch failed", err);
+    console.error("Failed to fetch trades", err);
   }
 }
 
 /**
- * Update historical store
+ * Add new trades to history
  */
 function updateHistory(trades) {
   const now = Date.now();
@@ -185,7 +111,7 @@ function updateHistory(trades) {
 }
 
 /**
- * Render live trades
+ * Render live trades (top section)
  */
 function renderLive(trades) {
   liveEl.innerHTML = "";
@@ -193,7 +119,7 @@ function renderLive(trades) {
 }
 
 /**
- * Render historical trades
+ * Render historical trades (last 1 hour)
  */
 function renderHistory() {
   historyEl.innerHTML = "";
@@ -203,13 +129,16 @@ function renderHistory() {
 
   if (!sorted.length) {
     historyEl.innerHTML =
-      "<div class='status'>No large trades saved to your browser cache in the last hour.</div>";
+      "<div class='status'>No large trades in the last hour.</div>";
     return;
   }
 
   sorted.forEach(t => historyEl.appendChild(tradeCard(t)));
 }
 
+/**
+ * Build trade card UI
+ */
 function tradeCard(t) {
   const div = document.createElement("div");
   div.className = `trade ${t.side.toLowerCase()}`;
@@ -218,8 +147,6 @@ function tradeCard(t) {
   const eventUrl = t.eventSlug
     ? `https://polymarket.com/event/${t.eventSlug}`
     : null;
-
-  const outcome = resolveOutcome(t);
 
   div.innerHTML = `
     <h3>
@@ -233,7 +160,7 @@ function tradeCard(t) {
     </h3>
     <div class="meta">${t.slug || "Unknown Market"} • ${time}</div>
     <div class="details">
-      <span>${t.side} <strong>${outcome}</strong></span>
+      <span>${t.side}</span>
       <span class="amount">$${t.size.toLocaleString()}</span>
     </div>
   `;
@@ -241,7 +168,9 @@ function tradeCard(t) {
   return div;
 }
 
-
+/**
+ * Countdown loop
+ */
 function startCountdown() {
   setInterval(() => {
     secondsLeft--;
@@ -256,11 +185,10 @@ function startCountdown() {
   }, 1000);
 }
 
-// init block
-(async function init() {
-  await loadMarkets();
-  expireHistory();
-  renderHistory();
-  fetchTrades();
-  startCountdown();
-})();
+/**
+ * Init
+ */
+expireHistory();
+renderHistory();
+fetchTrades();
+startCountdown();
