@@ -4,6 +4,8 @@ const REFRESH_INTERVAL = 10; // seconds
 const HISTORY_TTL = 60 * 60 * 1000; // 1 hour
 const STORAGE_KEY = "polymarket_large_trades";
 
+const lastUpdatedEl = document.getElementById("lastUpdated");
+
 const liveEl = document.getElementById("liveTrades");
 const historyEl = document.getElementById("historicalTrades");
 const countdownEl = document.getElementById("countdown");
@@ -25,6 +27,16 @@ function tradeKey(t) {
 /**
  * Load persisted history from localStorage
  */
+
+function updateLastUpdated() {
+  const now = new Date();
+  const time = now.toLocaleTimeString("en-US", {
+    hour12: false
+  });
+
+  lastUpdatedEl.textContent = `Last updated: ${time}`;
+}
+
 function loadHistory() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -85,6 +97,7 @@ async function fetchTrades() {
     updateHistory(bigTrades);
     renderLive(bigTrades);
     renderHistory();
+    updateLastUpdated();
   } catch (err) {
     console.error("Failed to fetch trades", err);
   }
