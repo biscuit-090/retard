@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Polymarket Large Bets Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="page">
+    <header>
+      <h1>🔥 Polymarket Retard Finder ($10,000+ SELL/BUYS)</h1>
+
+      <div class="timer-container">
+        <svg class="progress-ring" width="80" height="80">
+          <circle class="progress-ring__circle" stroke="var(--accent)" stroke-width="6" fill="transparent" r="34"
+            cx="40" cy="40" />
+        </svg>
+        <span id="countdown">10</span>
+      </div>
+    </header>
+
+    <main>
+      <section>
+        <h2>Live (Most Recent)</h2>
+        <div id="liveTrades" class="trades"></div>
+      </section>
+
+      <section class="history">
+        <h2>Last 1 Hour</h2>
+        <div id="historicalTrades" class="trades"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </div>
+</body>
+
+</html>
