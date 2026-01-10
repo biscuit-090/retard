@@ -1,6 +1,6 @@
 const API_URL = "https://data-api.polymarket.com/trades?limit=1000";
-const MIN_SIZE = 10_000;
-const REFRESH_INTERVAL = 10; // seconds
+const MIN_SIZE = 50_000;
+const REFRESH_INTERVAL = 5; // seconds
 const HISTORY_TTL = 60 * 60 * 1000; // 1 hour
 const STORAGE_KEY = "polymarket_large_trades";
 
