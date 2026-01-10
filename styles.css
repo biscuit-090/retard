@@ -90,6 +90,10 @@ section h2 {
   flex-direction: column;
 }
 
+.trade:hover {
+  background-color:#1a1f28
+}
+
 .trade .details {
     margin-top: auto;
 }
@@ -292,4 +296,8 @@ section h2 {
 
 .notice.collapsed .arrow {
   transform: rotate(180deg); /* ▼ becomes ▲ */
+}
+
+#target {
+  color: var(--muted);
 }

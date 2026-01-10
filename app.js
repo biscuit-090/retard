@@ -1,5 +1,5 @@
 const API_URL = "https://data-api.polymarket.com/trades?limit=1000";
-const MIN_SIZE = 50_000;
+const MIN_SIZE = 25_000;
 const REFRESH_INTERVAL = 10; // seconds
 const HISTORY_TTL = 24 * 60 * 60 * 1000; // 1 hour
 const STORAGE_KEY = "polymarket_large_trades";
@@ -90,7 +90,7 @@ function tradeKey(t) {
 function updateLastUpdated() {
   const now = new Date();
   const time = now.toLocaleTimeString("en-US", { hour12: true });
-  lastUpdatedEl.textContent = `Last updated: ${time} (10s ago)`;
+  lastUpdatedEl.textContent = `Last updated: ${time}`;
 }
 
 /**
