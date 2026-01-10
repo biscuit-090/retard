@@ -234,7 +234,16 @@ section h2 {
 }
 
 @media (max-width: 650px) {
-  
+  #logo {
+    display: none;
+  }
+  #page-supertitle {
+    font-size: 1rem;
+  }
+  .page-header-details {
+    margin-left: 5px;
+    padding-left: none;
+  }
 }
 
 .mute-btn {
@@ -300,4 +309,42 @@ section h2 {
 
 #target {
   color: var(--muted);
+}
+
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltip-icon {
+  font-size: 1rem;
+  color: var(--muted);
+  cursor: help;
+}
+
+.tooltip {
+  position: absolute;
+  top: calc(100% + 10px); /* ⬇ force below */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  background: #0b0e14;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 1000;
+}
+
+
+.tooltip-container:hover .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(2px);
 }

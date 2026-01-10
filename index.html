@@ -10,16 +10,33 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="stylesheet" href="styles.css" />
+  <!-- use fontawesome because i fuckin hate emojis! -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    referrerpolicy="no-referrer" />
+
+
 </head>
 
 <body>
   <div class="page">
     <header>
       <div class="page-header">
-        <img src="logo.png" />
+        <img id="logo" src="logo.png" />
         <div class="page-header-details">
-          <h1>Polymarket Insider Tracker</h1>
-          <p id="target">$25,000+ BUYS/SELLS</p>
+          <h1 id="page-supertitle">Polymarket Insider Tracker</h1>
+          <p id="target" class="tooltip-container">
+            $25,000+ Buys/Sells
+            <span class="tooltip-icon">
+              <i class="fa-regular fa-question-circle"></i>
+            </span>
+            <span class="tooltip">
+              The $25,000 threshold is intentionally a fixed number. Trades smaller than this are not typically indicative of suspicious behavior or insider
+              activity. Trades at or above this level are rare enough to stand out,
+              and statistically more likely to involve highly confident actors - inside traders.
+              <br><br>
+              This filter keeps the feed focused on signals, not spam.
+            </span>
+          </p>
         </div>
       </div>
       <div class="timer-container">
@@ -35,11 +52,12 @@
         <div class="notice-header">
           <span style="font-size: 1.1rem; font-weight: bold;">Important</span>
           <button id="noticeToggle" class="arrow" aria-label="Toggle notice">
-            ▼
+            ▲
           </button>
         </div>
         <div id="noticeContent" class="notice-content" style="display: flex; flex-direction: column;">
-          <b style="color: limegreen; font-weight: 500; margin-bottom: 12px;">The live feed refreshes every 10 seconds.</b>
+          <b style="color: limegreen; font-weight: 500; margin-bottom: 12px;">The live feed refreshes every 10
+            seconds.</b>
           This website only tracks bets/sells that happen while you have it open. There is
           no shared database. If you close your browser, entries may disappear. Refreshing will not delete entries.
         </div>
