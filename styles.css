@@ -223,7 +223,6 @@ section h2 {
   display: flex;
   color: var(--text);
   font-size: 0.85rem;
-  margin-bottom: 2px !important;
 }
 
 .legend-note {
