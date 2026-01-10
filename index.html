@@ -14,21 +14,36 @@
 <body>
   <div class="page">
     <header>
-      <h1>🔥 Polymarket Insider Finder ($50,000+ SELL/BUYS)</h1>
-
+      <div class="page-header">
+        <img src="logo.png" />
+        <div class="page-header-details">
+          <h1>Polymarket Insider Tracker</h1>
+          <p id="target">$50,000+ BUYS/SELLS</p>
+        </div>
+      </div>
       <div class="timer-container">
         <svg class="progress-ring" width="80" height="80">
           <circle class="progress-ring__circle" stroke="var(--accent)" stroke-width="6" fill="transparent" r="34"
             cx="40" cy="40" />
         </svg>
-        <span id="countdown">5</span>
+        <span id="countdown">10</span>
       </div>
     </header>
-
     <main>
-      <p style="margin-bottom: 40px;"><b>Important:</b> <br /><br />This website only shows bets/sells that happen while you have it open.
-There is no shared database. If you refresh or leave, entries may disappear.
-      </p>
+      <div id="notice" class="notice">
+        <div class="notice-header">
+          <span style="font-size: 1.1rem; font-weight: bold;">Important</span>
+          <button id="noticeToggle" class="arrow" aria-label="Toggle notice">
+            ▼
+          </button>
+        </div>
+        <div id="noticeContent" class="notice-content" style="display: flex; flex-direction: column;">
+          <b style="color: limegreen; font-weight: 500; margin-bottom: 12px;">The live feed refreshes every 10 seconds.</b>
+          This website only tracks bets/sells that happen while you have it open. There is
+          no shared database. If you close your browser, entries may disappear. Refreshing will not delete entries.
+        </div>
+      </div>
+      <button id="muteToggle" class="mute-btn">🔇 Pings Muted</button>
       <section>
         <h2>Live (Most Recent)</h2>
         <div id="liveTrades" class="trades"></div>
@@ -38,7 +53,7 @@ There is no shared database. If you refresh or leave, entries may disappear.
       </section>
 
       <section class="history">
-        <h2>Last 1 Hour</h2>
+        <h2>Last 24 Hours</h2>
         <div id="historicalTrades" class="trades"></div>
       </section>
 

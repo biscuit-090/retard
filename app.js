@@ -1,11 +1,71 @@
 const API_URL = "https://data-api.polymarket.com/trades?limit=1000";
 const MIN_SIZE = 50_000;
-const REFRESH_INTERVAL = 5; // seconds
-const HISTORY_TTL = 60 * 60 * 1000; // 1 hour
+const REFRESH_INTERVAL = 10; // seconds
+const HISTORY_TTL = 24 * 60 * 60 * 1000; // 1 hour
 const STORAGE_KEY = "polymarket_large_trades";
 
-const lastUpdatedEl = document.getElementById("lastUpdated");
+// what is this audio blessing my ears
+const AUDIO_MIN = new Audio("ping.mp3");
+const AUDIO_MILLION = new Audio("holy-shit.mp3");
 
+const MUTE_KEY = "polymarket_audio_muted";
+
+AUDIO_MIN.volume = 0.75;
+AUDIO_MILLION.volume = 1;
+
+const muteToggleBtn = document.getElementById("muteToggle");
+
+const notice = document.getElementById("notice");
+const noticeToggle = document.getElementById("noticeToggle");
+const NOTICE_KEY = "notice_collapsed";
+
+// load persisted state
+if (localStorage.getItem(NOTICE_KEY) === "true") {
+  notice.classList.add("collapsed");
+}
+
+noticeToggle.addEventListener("click", () => {
+  notice.classList.toggle("collapsed");
+  localStorage.setItem(
+    NOTICE_KEY,
+    notice.classList.contains("collapsed")
+  );
+});
+
+// Default: muted
+let isMuted = localStorage.getItem(MUTE_KEY) !== "false";
+
+// Apply mute state
+function applyMute() {
+  AUDIO_MIN.muted = isMuted;
+  AUDIO_MILLION.muted = isMuted;
+  muteToggleBtn.textContent = isMuted ? "🔇 Pings Muted" : "🔊 Pings On";
+}
+
+applyMute();
+
+muteToggleBtn.addEventListener("click", () => {
+  isMuted = !isMuted;
+  localStorage.setItem(MUTE_KEY, String(isMuted));
+  applyMute();
+});
+
+// rev up those fryers
+document.addEventListener(
+  "click",
+  () => {
+    AUDIO_MIN.muted = true;
+    AUDIO_MILLION.muted = true;
+
+    AUDIO_MIN.play().then(() => AUDIO_MIN.pause()).catch(() => {});
+    AUDIO_MILLION.play().then(() => AUDIO_MILLION.pause()).catch(() => {});
+
+    applyMute(); // restore correct mute state
+  },
+  { once: true }
+);
+
+const lastUpdatedEl = document.getElementById("lastUpdated");
 const liveEl = document.getElementById("liveTrades");
 const historyEl = document.getElementById("historicalTrades");
 const countdownEl = document.getElementById("countdown");
@@ -25,18 +85,17 @@ function tradeKey(t) {
 }
 
 /**
- * Load persisted history from localStorage
+ * Update "Last updated" text
  */
-
 function updateLastUpdated() {
   const now = new Date();
-  const time = now.toLocaleTimeString("en-US", {
-    hour12: false
-  });
-
-  lastUpdatedEl.textContent = `Last updated: ${time}`;
+  const time = now.toLocaleTimeString("en-US", { hour12: true });
+  lastUpdatedEl.textContent = `Last updated: ${time} (10s ago)`;
 }
 
+/**
+ * Load persisted history
+ */
 function loadHistory() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -47,7 +106,7 @@ function loadHistory() {
 }
 
 /**
- * Save history to localStorage
+ * Save history
  */
 function saveHistory(store) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
@@ -76,7 +135,7 @@ function expireHistory() {
 }
 
 /**
- * Update countdown ring
+ * Countdown ring
  */
 function setProgress(seconds) {
   const offset =
@@ -104,7 +163,7 @@ async function fetchTrades() {
 }
 
 /**
- * Add new trades to history
+ * Add new trades to history + play audio
  */
 function updateHistory(trades) {
   const now = Date.now();
@@ -112,9 +171,19 @@ function updateHistory(trades) {
 
   for (const t of trades) {
     const key = tradeKey(t);
+
     if (!historyStore[key]) {
       historyStore[key] = { ...t, firstSeen: now };
       changed = true;
+
+      // 🔊 AUDIO LOGIC (only once per new trade)
+      if (t.size > 1_000_000) {
+        AUDIO_MILLION.currentTime = 0;
+        AUDIO_MILLION.play().catch(() => {});
+      } else {
+        AUDIO_MIN.currentTime = 0;
+        AUDIO_MIN.play().catch(() => {});
+      }
     }
   }
 
@@ -124,25 +193,33 @@ function updateHistory(trades) {
 }
 
 /**
- * Render live trades (top section)
+ * Render live trades
  */
 function renderLive(trades) {
   liveEl.innerHTML = "";
+
+  if (!trades.length) {
+    liveEl.innerHTML = `<div class="status">Nothing yet.</div>`;
+    return;
+  }
+
   trades.slice(0, 12).forEach(t => liveEl.appendChild(tradeCard(t)));
 }
 
+
 /**
- * Render historical trades (last 1 hour)
+ * Render historical trades
  */
 function renderHistory() {
   historyEl.innerHTML = "";
 
-  const sorted = Object.values(historyStore)
-    .sort((a, b) => b.timestamp - a.timestamp);
+  const sorted = Object.values(historyStore).sort(
+    (a, b) => b.timestamp - a.timestamp
+  );
 
   if (!sorted.length) {
     historyEl.innerHTML =
-      "<div class='status'>No large trades in the last hour.</div>";
+      "<div class='status'>You haven't tracked any trades in the last 24 hours.</div>";
     return;
   }
 
@@ -150,7 +227,7 @@ function renderHistory() {
 }
 
 /**
- * Build trade card UI
+ * Trade card UI
  */
 function tradeCard(t) {
   const div = document.createElement("div");
