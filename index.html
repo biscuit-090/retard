@@ -19,18 +19,18 @@
 
 <body>
   <div class="page">
-    <header>
+    <header style="padding: 25px;">
       <div class="page-header">
         <img id="logo" src="logo.png" />
         <div class="page-header-details">
           <h1 id="page-supertitle">Polymarket Insider Tracker</h1>
           <p id="target" class="tooltip-container">
-            $25,000+ Buys/Sells
+            $20,000+ Buys/Sells
             <span class="tooltip-icon">
               <i class="fa-regular fa-question-circle"></i>
             </span>
             <span class="tooltip">
-              The $25,000 threshold is an intentionally fixed number. Trades smaller than this are not typically indicative of suspicious behavior or insider
+              The $20,000 threshold is an intentionally fixed number. Trades smaller than this are not typically indicative of suspicious behavior or insider
               activity. Trades at or above this level are rare enough to stand out,
               and statistically more likely to involve highly confident actors - inside traders.
               <br><br>
@@ -39,13 +39,15 @@
           </p>
         </div>
       </div>
+      <!--
       <div class="timer-container">
         <svg class="progress-ring" width="80" height="80">
           <circle class="progress-ring__circle" stroke="var(--accent)" stroke-width="6" fill="transparent" r="34"
             cx="40" cy="40" />
         </svg>
-        <span id="countdown">10</span>
+        <span id="countdown">5</span>
       </div>
+    -->
     </header>
     <main>
       <div id="notice" class="notice">
@@ -56,15 +58,40 @@
           </button>
         </div>
         <div id="noticeContent" class="notice-content" style="display: flex; flex-direction: column;">
-          <b style="color: limegreen; font-weight: 500; margin-bottom: 12px;">The live feed refreshes every 10
-            seconds.</b>
-          This website only tracks bets/sells that happen while you have it open. There is
-          no shared database. If you close your browser, entries may disappear. Refreshing will not delete entries.
+          This website only tracks events that happen while you have it open. <b style="color: dodgerblue; margin: 10px 0px;">There is
+          no shared database.</b> If you close your browser, entries may disappear. Refreshing will not delete entries.
         </div>
       </div>
+      <div class="polling-control">
+        <label for="pollInterval">
+          Update speed:
+        </label>
+
+        <select id="pollInterval">
+          <option value="100">Ultra-fast (100ms)</option>
+          <option value="250">Fast (250ms)</option>
+          <option value="500" selected>Balanced (500ms)</option>
+          <option value="1000">Slow (1s)</option>
+          <option value="2000">Very slow (2s)</option>
+          <option value="5000">Minimal (5s)</option>
+        </select>
+      </div>
+
+      <div class="polling-note">
+        Note: slower update speeds reduce bandwidth usage but are more likely to miss trades since updates are in realtime.
+      </div>
+
       <button id="muteToggle" class="mute-btn">🔇 Pings Muted</button>
+      <div class="preview-pings">
+        <button id="samplePing" class="sample-ping">
+          ▶ &nbsp;Preview $20K+ Ping
+        </button>
+        <button id="samplePing2" class="sample-ping">
+          ▶ &nbsp;Preview $1M+ Ping
+        </button>
+      </div>
       <section>
-        <h2>Live Feed (Most Recent)</h2>
+        <h2 class="section-title">Live Feed (Most Recent)</h2>
         <div id="liveTrades" class="trades"></div>
         <div id="lastUpdated" class="last-updated">
           Last updated: —
@@ -72,10 +99,11 @@
       </section>
 
       <section class="history">
-        <h2>Last 24 Hours</h2>
+        <h2 class="section-title">Last 7 Days</h2>
         <div id="historicalTrades" class="trades"></div>
       </section>
 
+      <!--
       <h3>Legend</h3>
       <section class="legend" aria-label="Buy and Sell legend">
         <div class="legend-items">
@@ -98,6 +126,7 @@
           BUY and SELL only show money moving — <b>not which answer they picked</b> (YES, NO, or other outcomes)
         </p>
       </section>
+    -->
 
     </main>
     <script src="app.js"></script>

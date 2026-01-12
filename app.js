@@ -1,16 +1,19 @@
 const API_URL = "https://data-api.polymarket.com/trades?limit=1000";
-const MIN_SIZE = 25_000;
-const REFRESH_INTERVAL = 10; // seconds
-const HISTORY_TTL = 24 * 60 * 60 * 1000; // 1 hour
+const MIN_SIZE = 20_000; // USD threshold
+const POLL_INTERVAL_KEY = "poll_interval_ms";
+let pollIntervalMs = Number(
+  localStorage.getItem(POLL_INTERVAL_KEY)
+) || 1000; // default 1000ms
+const HISTORY_TTL = 7 * 24 * 60 * 60 * 1000; // 24 hours
 const STORAGE_KEY = "polymarket_large_trades";
 
-// what is this audio blessing my ears
+// 🔊 audio
 const AUDIO_MIN = new Audio("ping.mp3");
 const AUDIO_MILLION = new Audio("holy-shit.mp3");
 
 const MUTE_KEY = "polymarket_audio_muted";
 
-AUDIO_MIN.volume = 0.75;
+AUDIO_MIN.volume = 1;
 AUDIO_MILLION.volume = 1;
 
 const muteToggleBtn = document.getElementById("muteToggle");
@@ -19,7 +22,7 @@ const notice = document.getElementById("notice");
 const noticeToggle = document.getElementById("noticeToggle");
 const NOTICE_KEY = "notice_collapsed";
 
-// load persisted state
+// restore notice collapsed state
 if (localStorage.getItem(NOTICE_KEY) === "true") {
   notice.classList.add("collapsed");
 }
@@ -32,10 +35,17 @@ noticeToggle.addEventListener("click", () => {
   );
 });
 
+function flashMuteButton() {
+  muteToggleBtn.classList.remove("flash-twice"); // reset if already animating
+  void muteToggleBtn.offsetWidth;                // force reflow
+  muteToggleBtn.classList.add("flash-twice");
+}
+
+
+
 // Default: muted
 let isMuted = localStorage.getItem(MUTE_KEY) !== "false";
 
-// Apply mute state
 function applyMute() {
   AUDIO_MIN.muted = isMuted;
   AUDIO_MILLION.muted = isMuted;
@@ -50,7 +60,36 @@ muteToggleBtn.addEventListener("click", () => {
   applyMute();
 });
 
-// rev up those fryers
+const samplePingBtn = document.getElementById("samplePing");
+const samplePingBtn2 = document.getElementById("samplePing2");
+
+function bindSamplePing(button, audio) {
+  button.addEventListener("click", () => {
+    if (isMuted) {
+      flashMuteButton();
+      return;
+    }
+
+    if (button.disabled) return;
+
+    button.disabled = true;
+
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+
+    setTimeout(() => {
+      button.disabled = false;
+    }, 1000);
+  });
+}
+
+
+bindSamplePing(samplePingBtn, AUDIO_MIN);
+bindSamplePing(samplePingBtn2, AUDIO_MILLION);
+
+
+
+// prime audio (browser requirement)
 document.addEventListener(
   "click",
   () => {
@@ -60,7 +99,7 @@ document.addEventListener(
     AUDIO_MIN.play().then(() => AUDIO_MIN.pause()).catch(() => {});
     AUDIO_MILLION.play().then(() => AUDIO_MILLION.pause()).catch(() => {});
 
-    applyMute(); // restore correct mute state
+    applyMute();
   },
   { once: true }
 );
@@ -68,34 +107,31 @@ document.addEventListener(
 const lastUpdatedEl = document.getElementById("lastUpdated");
 const liveEl = document.getElementById("liveTrades");
 const historyEl = document.getElementById("historicalTrades");
-const countdownEl = document.getElementById("countdown");
-const circle = document.querySelector(".progress-ring__circle");
-
-const radius = 34;
-const circumference = 2 * Math.PI * radius;
-circle.style.strokeDasharray = `${circumference}`;
-
-let secondsLeft = REFRESH_INTERVAL;
 
 /**
- * Create a stable fingerprint for a trade
+ * Utilities
  */
+
 function tradeKey(t) {
   return `${t.conditionId}-${t.timestamp}-${t.size}-${t.price}-${t.side}`;
 }
 
-/**
- * Update "Last updated" text
- */
 function updateLastUpdated() {
   const now = new Date();
-  const time = now.toLocaleTimeString("en-US", { hour12: true });
-  lastUpdatedEl.textContent = `Last updated: ${time}`;
+
+  const time = now.toLocaleTimeString("en-US", {
+    hour12: false,
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+
+  const ms = String(now.getMilliseconds()).padStart(3, "0");
+
+  lastUpdatedEl.textContent = `Last updated: ${time}.${ms}`;
 }
 
-/**
- * Load persisted history
- */
+
 function loadHistory() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -105,21 +141,12 @@ function loadHistory() {
   }
 }
 
-/**
- * Save history
- */
 function saveHistory(store) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
 }
 
-/**
- * In-memory + persisted store
- */
 let historyStore = loadHistory();
 
-/**
- * Expire trades older than 1 hour
- */
 function expireHistory() {
   const now = Date.now();
   let changed = false;
@@ -135,23 +162,58 @@ function expireHistory() {
 }
 
 /**
- * Countdown ring
+ * 🔢 Parsing / formatting helpers
  */
-function setProgress(seconds) {
-  const offset =
-    circumference - (seconds / REFRESH_INTERVAL) * circumference;
-  circle.style.strokeDashoffset = offset;
+
+function parseTradeSize(raw) {
+  if (typeof raw === "number") return raw;
+  if (typeof raw !== "string") return 0;
+
+  const cleaned = raw.replace(/,/g, "");
+  const num = Number.parseFloat(cleaned);
+
+  return Number.isFinite(num) ? num : 0;
+}
+
+// total USD spent = shares × price
+function calculateTotalPaid(size, price) {
+  return parseTradeSize(size) * parseTradeSize(price);
+}
+
+function formatUSD(amount) {
+  const roundedUp = Math.ceil(amount * 100) / 100;
+  return roundedUp.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function truncate(text, max = 35) {
+  if (!text) return "";
+  return text.length > max ? text.slice(0, max - 1) + ".." : text;
+}
+
+function formatUsername(name, max = 10) {
+  if (!name) return "Someone";
+  return name.length > max ? name.slice(0, max - 1) + ".." : name;
 }
 
 /**
- * Fetch latest trades
+ * Fetch trades
  */
+let fetchInFlight = false;
+
 async function fetchTrades() {
+  if (fetchInFlight) return;
+  fetchInFlight = true;
+
   try {
     const res = await fetch(API_URL);
     const data = await res.json();
 
-    const bigTrades = data.filter(t => t.size >= MIN_SIZE);
+    const bigTrades = data.filter(t =>
+      calculateTotalPaid(t.size, t.price) >= MIN_SIZE
+    );
 
     updateHistory(bigTrades);
     renderLive(bigTrades);
@@ -159,11 +221,13 @@ async function fetchTrades() {
     updateLastUpdated();
   } catch (err) {
     console.error("Failed to fetch trades", err);
+  } finally {
+    fetchInFlight = false;
   }
 }
 
 /**
- * Add new trades to history + play audio
+ * History + audio
  */
 function updateHistory(trades) {
   const now = Date.now();
@@ -176,11 +240,12 @@ function updateHistory(trades) {
       historyStore[key] = { ...t, firstSeen: now };
       changed = true;
 
-      // 🔊 AUDIO LOGIC (only once per new trade)
-      if (t.size > 1_000_000) {
+      const totalPaid = calculateTotalPaid(t.size, t.price);
+
+      if (totalPaid >= 1_000_000) {
         AUDIO_MILLION.currentTime = 0;
         AUDIO_MILLION.play().catch(() => {});
-      } else {
+      } else if (totalPaid >= MIN_SIZE) {
         AUDIO_MIN.currentTime = 0;
         AUDIO_MIN.play().catch(() => {});
       }
@@ -188,13 +253,13 @@ function updateHistory(trades) {
   }
 
   expireHistory();
-
   if (changed) saveHistory(historyStore);
 }
 
 /**
- * Render live trades
+ * Rendering
  */
+
 function renderLive(trades) {
   liveEl.innerHTML = "";
 
@@ -206,16 +271,11 @@ function renderLive(trades) {
   trades.slice(0, 12).forEach(t => liveEl.appendChild(tradeCard(t)));
 }
 
-
-/**
- * Render historical trades
- */
 function renderHistory() {
   historyEl.innerHTML = "";
 
-  const sorted = Object.values(historyStore).sort(
-    (a, b) => b.timestamp - a.timestamp
-  );
+  const sorted = Object.values(historyStore)
+    .sort((a, b) => b.timestamp - a.timestamp);
 
   if (!sorted.length) {
     historyEl.innerHTML =
@@ -233,25 +293,80 @@ function tradeCard(t) {
   const div = document.createElement("div");
   div.className = `trade ${t.side.toLowerCase()}`;
 
-  const time = new Date(t.timestamp * 1000).toLocaleString();
+  if (t.icon) {
+    div.style.setProperty("--trade-icon", `url(${t.icon})`);
+  }
+
   const eventUrl = t.eventSlug
     ? `https://polymarket.com/event/${t.eventSlug}`
     : null;
 
+  const profileUrl = t.name
+    ? `https://polymarket.com/@${t.name}`
+    : null;
+
+  const txUrl = t.transactionHash
+    ? `https://polygonscan.com/tx/${t.transactionHash}`
+    : null;
+
+  const totalPaid = calculateTotalPaid(t.size, t.price);
+
   div.innerHTML = `
-    <h3>
+    <div class="trade-content">
+      <h3 class="trade-title">
+        ${
+          eventUrl
+            ? `<a class="trade-link" href="${eventUrl}" target="_blank" rel="noopener noreferrer">
+                 ${truncate(t.title || "Unknown Event")}
+               </a>`
+            : truncate(t.title || "Unknown Event")
+        }
+        ${
+          eventUrl
+            ? `<i class="fa-solid fa-arrow-up-right-from-square" style="margin-left: 5px; font-size: 0.7rem;"></i>`
+            : ""
+        }
+      </h3>
+
+      <div class="trade-subtitle">
+        ${
+          profileUrl
+            ? `<a class="profile-link" href="${profileUrl}" target="_blank" rel="noopener noreferrer">
+                 @${formatUsername(t.name)}
+               </a>`
+            : "Someone"
+        }
+        &nbsp;bet on outcome:
+        <strong>${t.outcome || "Unknown"}</strong>
+      </div>
+
+      <div class="trade-meta">
+        ${new Date(t.timestamp * 1000).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        })}
+        •
+        ${new Date(t.timestamp * 1000).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit"
+        })}
+      </div>
+
       ${
-        eventUrl
-          ? `<a href="${eventUrl}" target="_blank" rel="noopener noreferrer">
-               ${t.eventSlug}
-             </a>`
-          : "Unknown Event"
+        txUrl
+          ? `<div class="trade-tx">
+               <a href="${txUrl}" target="_blank" rel="noopener noreferrer">
+                 View transaction on <b style="color:#fff;font-weight:400;">PolygonScan</b>
+               </a>
+             </div>`
+          : ""
       }
-    </h3>
-    <div class="meta">${t.slug || "Unknown Market"} • ${time}</div>
-    <div class="details">
-      <span>${t.side}</span>
-      <span class="amount">$${t.size.toLocaleString()}</span>
+
+      <div class="details">
+        <span class="badge">${t.side}</span>
+        <span class="amount">$${formatUSD(totalPaid)}</span>
+      </div>
     </div>
   `;
 
@@ -259,21 +374,31 @@ function tradeCard(t) {
 }
 
 /**
- * Countdown loop
+ * Polling
  */
-function startCountdown() {
-  setInterval(() => {
-    secondsLeft--;
+function startPolling() {
+  let lastFetch = 0;
 
-    if (secondsLeft <= 0) {
-      secondsLeft = REFRESH_INTERVAL;
+  setInterval(() => {
+    const now = performance.now();
+
+    if (now - lastFetch >= pollIntervalMs) {
+      lastFetch = now;
       fetchTrades();
     }
-
-    countdownEl.textContent = secondsLeft;
-    setProgress(secondsLeft);
-  }, 1000);
+  }, 50);
 }
+
+const pollSelect = document.getElementById("pollInterval");
+
+// restore saved value
+pollSelect.value = pollIntervalMs;
+
+pollSelect.addEventListener("change", () => {
+  pollIntervalMs = Number(pollSelect.value);
+  localStorage.setItem(POLL_INTERVAL_KEY, pollIntervalMs);
+});
+
 
 /**
  * Init
@@ -281,4 +406,4 @@ function startCountdown() {
 expireHistory();
 renderHistory();
 fetchTrades();
-startCountdown();
+startPolling();
