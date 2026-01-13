@@ -90,16 +90,20 @@
           ▶ &nbsp;Preview $1M+ Ping
         </button>
       </div>
-      <section>
-        <h2 class="section-title">Live Feed (Most Recent)</h2>
+      <section class="live-feed">
+        <h2 class="section-title">Live Feed (most recent)</h2>
         <div id="liveTrades" class="trades"></div>
         <div id="lastUpdated" class="last-updated">
           Last updated: —
         </div>
       </section>
-
       <section class="history">
-        <h2 class="section-title">Last 7 Days</h2>
+        <div class="history-container">
+          <h2 class="section-title">Last 7 Days</h2>
+          <button id="clearHistory" class="clear-history">
+            Clear history
+          </button>
+        </div>
         <div id="historicalTrades" class="trades"></div>
       </section>
 

@@ -59,11 +59,11 @@ h1 {
 }
 
 main {
-  padding: 24px;
+  padding: 24px 0 0 0;
 }
 
 section {
-  margin-bottom: 32px;
+  margin-bottom: 10px;
 }
 
 section h2 {
@@ -335,7 +335,7 @@ section h2 {
   left: 50%;
   transform: translateX(-50%);
   width: 300px;
-  background: #0b0e14;
+  background: rgb(25, 32, 46);
   border: 1px solid #222;
   border-radius: 8px;
   padding: 10px 12px;
@@ -421,7 +421,15 @@ section h2 {
 
 .section-title {
   color: white !important;
+  margin-bottom: 16px;
 }
+
+.live-feed {
+  border-bottom: 1px solid #222;
+  padding-bottom: 10px;
+  padding-top: 2px;
+}
+
 .trade-row {
   display: flex;
   gap: 12px;
@@ -556,4 +564,27 @@ section h2 {
 
 .flash-twice {
   animation: flash-twice 1s ease-in-out;
+}
+
+.history-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+}
+.clear-history {
+  margin-left: 10px;
+  margin-top: 2px;
+  background: #1b2430;
+  color: #fff;
+  border: 1px solid #2d3b4f;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  height: fit-content;
+  cursor: pointer;
+}
+
+.clear-history:hover {
+  background: #243246;
 }

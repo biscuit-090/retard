@@ -11,6 +11,9 @@ const STORAGE_KEY = "polymarket_large_trades";
 const AUDIO_MIN = new Audio("ping.mp3");
 const AUDIO_MILLION = new Audio("holy-shit.mp3");
 
+const renderedLive = new Set();
+const renderedHistory = new Set();
+
 const MUTE_KEY = "polymarket_audio_muted";
 
 AUDIO_MIN.volume = 1;
@@ -256,35 +259,59 @@ function updateHistory(trades) {
   if (changed) saveHistory(historyStore);
 }
 
+const clearHistoryBtn = document.getElementById("clearHistory");
+
+clearHistoryBtn.addEventListener("click", () => {
+  localStorage.removeItem(STORAGE_KEY);
+  historyStore = {};
+  renderedHistory.clear();
+  historyEl.innerHTML = "";
+});
+
+
+
+
 /**
  * Rendering
  */
 
 function renderLive(trades) {
-  liveEl.innerHTML = "";
-
-  if (!trades.length) {
+  if (!trades.length && liveEl.children.length === 0) {
     liveEl.innerHTML = `<div class="status">Nothing yet.</div>`;
     return;
   }
 
-  trades.slice(0, 12).forEach(t => liveEl.appendChild(tradeCard(t)));
+  for (const t of trades) {
+    const key = tradeKey(t);
+
+    if (renderedLive.has(key)) continue;
+
+    renderedLive.add(key);
+    liveEl.prepend(tradeCard(t));
+  }
 }
 
-function renderHistory() {
-  historyEl.innerHTML = "";
 
-  const sorted = Object.values(historyStore)
+function renderHistory() {
+  const entries = Object.values(historyStore)
     .sort((a, b) => b.timestamp - a.timestamp);
 
-  if (!sorted.length) {
+  if (!entries.length && historyEl.children.length === 0) {
     historyEl.innerHTML =
-      "<div class='status'>You haven't tracked any trades in the last 24 hours.</div>";
+      "<div class='status'>You haven't tracked any trades yet.</div>";
     return;
   }
 
-  sorted.forEach(t => historyEl.appendChild(tradeCard(t)));
+  for (const t of entries) {
+    const key = tradeKey(t);
+
+    if (renderedHistory.has(key)) continue;
+
+    renderedHistory.add(key);
+    historyEl.appendChild(tradeCard(t));
+  }
 }
+
 
 /**
  * Trade card UI
