@@ -332,11 +332,10 @@ function tradeCard(t) {
         ${
           profileUrl
             ? `<a class="profile-link" href="${profileUrl}" target="_blank" rel="noopener noreferrer">
-                 @${formatUsername(t.name)}
+                 @${formatUsername(t.name)} 
                </a>`
             : "Someone"
-        }
-        &nbsp;bet on outcome:
+        }bet on:
         <strong>${t.outcome || "Unknown"}</strong>
       </div>
 
