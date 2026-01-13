@@ -571,6 +571,7 @@ section h2 {
   align-items: center;
   width: 100%;
   justify-content: space-between;
+  margin-bottom: 6px;
 }
 .clear-history {
   margin-left: 10px;
